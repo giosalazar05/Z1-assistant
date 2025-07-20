@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Z1 Assistant</title>
+<style>
+body {
+background-color: #121212;
+color: #f0f0f0;
+font-family: 'Segoe UI', sans-serif;
+margin: 0;
+padding: 20px;
+}
+
+#chat-container {
+max-width: 600px;
+margin: auto;
+}
+
+h1 {
+text-align: center;
+margin-bottom: 20px;
+}
+
+#chat {
+background-color: #1e1e1e;
+border: 1px solid #333;
+padding: 15px;
+height: 400px;
+overflow-y: auto;
+margin-bottom: 10px;
+border-radius: 10px;
+}
+
+.msg {
+margin: 10px 0;
+line-height: 1.5;
+}
+
+.user {
+color: #a0e7e5;
+}
+
+.assistant {
+color: #b4f8c8;
+}
+
+#controls {
+display: flex;
+gap: 10px;
+}
+
+#userInput {
+flex: 1;
+padding: 10px;
+border-radius: 5px;
+border: none;
+}
+
+button {
+padding: 10px 15px;
+border-radius: 5px;
+border: none;
+cursor: pointer;
+background-color: #333;
+color: white;
+}
+
+#avatar {
+width: 60px;
+height: 60px;
+border-radius: 50%;
+background-color: #b4f8c8;
+animation: idleBounce 2s infinite;
+margin: 0 auto 10px auto;
+}
+
+@keyframes idleBounce {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-5px); }
+}
+
+.thinking {
+animation: thinkingPulse 1s infinite;
+}
+
+@keyframes thinkingPulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.1); }
+100% { transform: scale(1); }
+}
+</style>
+</head>
+<body>
+<div id="chat-container">
+<h1>🤖 Z1 Assistant</h1>
+<div id="avatar"></div>
+<div id="chat"></div>
+<div id="controls">
+<input type="text" id="userInput" placeholder="Ask something..." autofocus>
+<button onclick="sendMessage()">Send</button>
+<button onclick="startListening()">🎤</button>
+</div>
+</div>
+
+<script>
+let chatHistory = JSON.parse(localStorage.getItem("z1Chat")) || [];
+
+const chatBox = document.getElementById("chat");
+const input = document.getElementById("userInput");
+const avatar = document.getElementById("avatar");
+
+chatHistory.forEach(({ role, content }) => appendMessage(role, content));
+
+function appendMessage(role, content) {
+const msg = document.createElement("div");
+msg.className = `msg ${role}`;
+msg.textContent = `${role === "user" ? "🧑" : "🤖"}: ${content}`;
+chatBox.appendChild(msg);
+chatBox.scrollTop = chatBox.scrollHeight;
+
+if (role === "assistant") speak(content);
+}
+
+function speak(text) {
+const synth = window.speechSynthesis;
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = 'en-US';
+synth.speak(utterance);
+}
+
+function sendMessage() {
+const userText = input.value.trim();
+if (!userText) return;
+
+appendMessage("user", userText);
+chatHistory.push({ role: "user", content: userText });
+input.value = "";
+
+avatar.classList.add("thinking");
+
+// Simulate thinking delay and reply
+setTimeout(() => {
+const reply = generateFakeReply(userText);
+appendMessage("assistant", reply);
+chatHistory.push({ role: "assistant", content: reply });
+localStorage.setItem("z1Chat", JSON.stringify(chatHistory));
+avatar.classList.remove("thinking");
+}, 1000);
+}
+
+function generateFakeReply(userText) {
+// 🔁 Replace this with WebLLM later
+return `You said: "${userText}". I'm Z1 and I'm learning more every day.`;
+}
+
+function startListening() {
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = 'en-US';
+recognition.onresult = function(event) {
+input.value = event.results[0][0].transcript;
+sendMessage();
+};
+recognition.start();
+}
+</script>
+</body>
+</html>
